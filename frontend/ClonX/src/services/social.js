@@ -9,7 +9,8 @@ export function followUser(username) {
 }
 
 export function unfollowUser(username) {
-  return apiRequest(`/api/follows/${username.replace("@", "")}`, {
+  const normalizedUsername = username.trim().replace(/^@/, "");
+  return apiRequest(`/api/follows/${encodeURIComponent(normalizedUsername)}`, {
     method: "DELETE",
   });
 }

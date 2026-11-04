@@ -166,7 +166,8 @@ public class ApiController {
   AppUser me=current(a.getName());
   AppUser target=users.findByUsernameIgnoreCase(username).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Usuario no existe."));
   if(!follows.existsByFollowerIdAndFollowedId(me.getId(),target.getId())) throw new ResponseStatusException(HttpStatus.NOT_FOUND,"No sigues a ese usuario.");
-  follows.deleteByFollowerIdAndFollowedId(me.getId(),target.getId());
+  int deleted=follows.deleteByFollowerIdAndFollowedId(me.getId(),target.getId());
+  if(deleted!=1) throw new ResponseStatusException(HttpStatus.CONFLICT,"No se pudo dejar de seguir a ese usuario.");
   return Map.of("message","Dejaste de seguir a @"+username);
  }
 

@@ -301,7 +301,7 @@ No existe campo de contraseña. El código temporal es la única credencial del 
 | `followers(...)` | Devuelve seguidores paginados. |
 | `following(...)` | Devuelve cuentas seguidas. |
 | `follow(...)` | Crea una relación, evitando seguirse a sí mismo o duplicar. |
-| `unfollow(...)` | Elimina una relación existente. |
+| `unfollow(...)` | Elimina exactamente la relación del usuario autenticado con el usuario indicado y confirma que se borró una fila. |
 | `current(...)` | Busca la entidad del usuario autenticado. |
 | `tweetDto`, `userDto`, `pageDto` | Transforman entidades en JSON de respuesta. |
 

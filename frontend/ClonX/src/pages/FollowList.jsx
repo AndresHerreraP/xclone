@@ -67,6 +67,14 @@ export function FollowList({ type }) {
                   || (type === "following" && username.toLowerCase() === me?.username?.toLowerCase())
                 }
                 initiallyFollowed={type === "following" && username.toLowerCase() === me?.username?.toLowerCase()}
+                onUnfollow={(unfollowedUsername) => {
+                  if (type !== "following" || username.toLowerCase() !== me?.username?.toLowerCase()) return;
+                  setData((current) => ({
+                    ...current,
+                    items: current.items.filter((user) => user.username !== unfollowedUsername),
+                    totalItems: Math.max(0, current.totalItems - 1),
+                  }));
+                }}
               />
               <Pagination page={data.page} totalPages={data.totalPages} onPageChange={setPage} />
               <p className="list-footnote">La API ofrece paginacion; la lista se ordena alfabeticamente.</p>
