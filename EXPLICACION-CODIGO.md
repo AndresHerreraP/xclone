@@ -1,440 +1,414 @@
-# ClonX: explicación organizada del código
+# ClonX explicado línea por línea
 
-Este documento explica el proyecto desde el inicio de la aplicación hasta el login, la seguridad, la base de datos y las funciones sociales.
+Este documento sigue el código en el mismo orden en que aparece. Primero se explica el flujo general y después cada archivo importante.
 
-## 1. Mapa general del proyecto
-
-```text
-xclone/
-├── backend/
-│   └── src/main/java/com/clonx/
-│       ├── ClonXBackendApplication.java
-│       ├── controller/ApiController.java
-│       ├── config/SecurityConfig.java
-│       ├── config/SeedData.java
-│       ├── model/
-│       ├── repository/
-│       └── security/
-└── frontend/ClonX/
-    └── src/
-        ├── main.jsx
-        ├── App.jsx
-        ├── pages/
-        ├── components/
-        ├── services/
-        └── styles/index.css
-```
-
-## 2. Flujo completo de la aplicación
-
-### Arranque
-
-1. `main.jsx` monta React.
-2. `App.jsx` registra las rutas.
-3. Spring Boot ejecuta `ClonXBackendApplication`.
-4. El backend conecta con SQL Server y publica la API en el puerto `8080`.
-
-### Login sin contraseña
+## 1. Qué ocurre cuando una persona inicia sesión
 
 ```text
-Usuario/correo
-      │
-      ▼
-POST /api/auth/request-code
-      │
-      ▼
-Código temporal de seis dígitos
-      │
-      ▼
-POST /api/auth/login
-      │
-      ▼
-JWT + usuario
-      │
-      ▼
-localStorage y redirección a /feed
+1. El navegador abre /login.
+2. React muestra Login.jsx.
+3. La persona escribe usuario o correo.
+4. El frontend llama POST /api/auth/request-code.
+5. El backend genera un código de seis dígitos.
+6. La persona escribe el código.
+7. El frontend llama POST /api/auth/login.
+8. El backend valida el código y crea un JWT.
+9. El frontend guarda el JWT y abre /feed.
+10. En las siguientes peticiones, el JWT identifica al usuario.
 ```
 
-El proyecto no usa contraseña en la pantalla ni en el endpoint de login. El código expira en diez minutos y se elimina después de utilizarse.
+No existe campo de contraseña. El código temporal es la única credencial del login.
 
-## 3. Backend: cómo está organizado
+---
 
-### 3.1 Punto de entrada
+## 2. Frontend
 
-Archivo: `backend/src/main/java/com/clonx/ClonXBackendApplication.java`
+### 2.1 `src/main.jsx`
 
-```java
-package com.clonx;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+| Línea | Código | Qué significa |
+|---:|---|---|
+| 1 | `import React from 'react'` | Importa React. |
+| 2 | `import ReactDOM from 'react-dom/client'` | Importa la función que conecta React con el HTML. |
+| 3 | `import { BrowserRouter } from 'react-router-dom'` | Importa el sistema de navegación del frontend. |
+| 4 | `import { App } from './App.jsx'` | Importa el componente principal de la aplicación. |
+| 5 | `import 'bootstrap/dist/css/bootstrap.min.css'` | Carga las clases visuales de Bootstrap. |
+| 6 | `import 'bootstrap-icons/font/bootstrap-icons.css'` | Carga los iconos de Bootstrap. |
+| 7 | `import './styles/index.css'` | Carga los estilos propios de ClonX. |
+| 9 | `ReactDOM.createRoot(...)` | Busca el elemento HTML llamado `root` y prepara React dentro de él. |
+| 10 | `document.getElementById('root')` | Busca `<div id="root">` en `index.html`. |
+| 10 | `.render(...)` | Indica qué componentes se deben dibujar. |
+| 11 | `<React.StrictMode>` | Activa comprobaciones adicionales durante desarrollo. |
+| 12 | `<BrowserRouter>` | Permite cambiar de URL sin recargar toda la página. |
+| 13 | `<App />` | Dibuja las rutas y pantallas de la aplicación. |
+| 14 | `</BrowserRouter>` | Cierra el componente de navegación. |
+| 15 | `</React.StrictMode>` | Cierra el modo estricto. |
 
-@SpringBootApplication
-public class ClonXBackendApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(ClonXBackendApplication.class, args);
-    }
-}
-```
+### 2.2 `src/App.jsx`
 
-| Código | Función |
+| Línea | Código | Qué significa |
+|---:|---|---|
+| 2 | `import { Navigate, Route, Routes } ...` | Importa los componentes para definir rutas. |
+| 3 | `import { Feed } ...` | Importa la pantalla principal después del login. |
+| 4 | `import { Login } ...` | Importa la pantalla de acceso. |
+| 5 | `import { ProtectedRoute } ...` | Importa el guardia que exige un JWT. |
+| 6-9 | Imports de `Profile`, `FollowList`, `Search`, `Notifications` | Importan las demás pantallas. |
+| 11 | `export function App()` | Declara el componente principal. |
+| 12 | `return (` | Comienza el HTML que React va a dibujar. |
+| 13 | `<Routes>` | Agrupa todas las rutas. |
+| 14 | `<Route path="/login" ... />` | Si la URL es `/login`, muestra `Login`. |
+| 15 | `<Route element={<ProtectedRoute />}>` | Las rutas siguientes quedan protegidas. |
+| 16 | `path="/feed"` | Muestra el feed. |
+| 17 | `path="/search"` | Muestra la búsqueda. |
+| 18 | `path="/notifications"` | Muestra notificaciones. |
+| 19 | `path="/users/:username"` | Muestra un perfil; `:username` es variable. |
+| 20 | `followers` | Muestra seguidores del usuario. |
+| 21 | `following` | Muestra las cuentas seguidas. |
+| 23 | `path="*"` | Captura cualquier URL que no exista. |
+| 23 | `<Navigate to="/login" replace />` | Redirige las URL desconocidas al login. |
+| 24-26 | Cierres de `Routes`, `return` y función | Terminan la definición de rutas y el componente. |
+
+### 2.3 `src/pages/Login.jsx`
+
+#### Imports y estado
+
+| Línea | Código | Qué significa |
+|---:|---|---|
+| 1 | `import { useState } from "react";` | Importa `useState`, que guarda datos que cambian en pantalla. |
+| 2 | `import { useNavigate } ...` | Importa la función para navegar a otra ruta. |
+| 3 | `import { Divider } ...` | Importa el separador visual. |
+| 4 | `import { EmailLoginForm } ...` | Importa el formulario de login. |
+| 5 | `import { login } ...` | Importa la petición que valida el código. |
+| 7 | `export function Login()` | Declara la pantalla de login. |
+| 8 | `const navigate = useNavigate();` | Guarda una función para cambiar de `/login` a `/feed`. |
+| 9 | `useState("")` para `identifier` | Guarda el correo o nombre de usuario. |
+| 10 | `useState("")` para `code` | Guarda el código escrito. |
+| 11 | `useState(false)` para `codeRequested` | Indica si ya se pidió un código. |
+| 12 | `useState("")` para `error` | Guarda el mensaje de error visible. |
+| 13 | `useState(false)` para `loading` | Indica que una petición está en curso. |
+
+#### Envío del login
+
+| Línea | Código | Qué significa |
+|---:|---|---|
+| 15 | `async function handleSubmit(event)` | Define una función asíncrona para enviar el código. |
+| 16 | `event.preventDefault();` | Evita que el formulario recargue la página. |
+| 17 | `setLoading(true);` | Desactiva botones mientras espera respuesta. |
+| 18 | `setError("");` | Borra errores anteriores. |
+| 19 | `try {` | Comienza el bloque que puede fallar. |
+| 20 | `await login({ identifier, code });` | Envía usuario y código al backend y espera la respuesta. |
+| 21 | `navigate("/feed");` | Si todo funciona, abre el feed. |
+| 22 | `catch (loginError) {` | Captura errores HTTP o de conexión. |
+| 23 | `setError(loginError.message);` | Muestra el texto del error. |
+| 24 | `finally {` | Se ejecuta tanto si funciona como si falla. |
+| 25 | `setLoading(false);` | Reactiva los botones. |
+
+#### HTML de la pantalla
+
+| Línea o bloque | Qué significa |
 |---|---|
-| `package com.clonx;` | Coloca la clase en el paquete raíz del proyecto. |
-| `import SpringApplication` | Permite iniciar Spring Boot. |
-| `import SpringBootApplication` | Importa la anotación principal de Spring. |
-| `@SpringBootApplication` | Activa autoconfiguración, componentes y configuración Spring. |
+| `<main className="login-page">` | Contenedor principal de la pantalla. |
+| `container-fluid` | Usa todo el ancho disponible. |
+| `row min-vh-100` | Crea una fila con altura mínima de toda la pantalla. |
+| `col-12 col-md-6 login-left` | Columna izquierda: ocupa todo en móvil y la mitad desde tamaño medio. |
+| `<h1>...` | Muestra el título original en tres líneas. |
+| Texto `Escribe tu correo...` | Explica que se recibe un código, no una contraseña. |
+| `<EmailLoginForm ... />` | Pasa el estado y las funciones al formulario. |
+| `onIdentifierChange` | Actualiza `identifier` cuando se escribe. |
+| `onCodeChange` | Actualiza `code` cuando se escribe. |
+| `onCodeRequested` | Cambia `codeRequested` a `true`. |
+| `onError` | Permite que el formulario envíe errores al padre. |
+| `onSubmit={handleSubmit}` | Conecta el botón final con `handleSubmit`. |
+| `<Divider />` | Dibuja el separador. |
+| `login-right` e `<img>` | Muestran el logo en la columna derecha. |
+
+### 2.4 `src/components/EmailLoginForm.jsx`
+
+| Línea o bloque | Qué significa |
+|---|---|
+| Import de `Button` | Usa el botón reutilizable del proyecto. |
+| Import de `requestLoginCode` | Importa la función que pide el código al backend. |
+| Props de `EmailLoginForm` | Recibe valores y funciones desde `Login.jsx`. |
+| `handleRequestCode()` | Define qué ocurre al pulsar `Enviar código`. |
+| `await requestLoginCode(identifier)` | Envía el usuario/correo y espera respuesta. |
+| `onCodeRequested()` | Muestra el segundo paso cuando la respuesta es correcta. |
+| `catch (requestError)` | Captura un fallo al pedir código. |
+| `onError(requestError.message)` | Muestra ese fallo en el formulario. |
+| `<form onSubmit={onSubmit}>` | Usa la función final que recibió de `Login`. |
+| Input `identifier` | Campo para correo o username. |
+| `value={identifier}` | El valor visible viene del estado del padre. |
+| `onChange={onIdentifierChange}` | Cada tecla actualiza el estado. |
+| `required` | Impide enviar el formulario vacío. |
+| `!codeRequested ? (...) : (...)` | Elige entre el primer y segundo paso. |
+| Botón `Enviar código` | Ejecuta `handleRequestCode`; no envía login todavía. |
+| `disabled={loading || !identifier.trim()}` | Se desactiva mientras carga o si no hay usuario. |
+| `inputMode="numeric"` | Sugiere teclado numérico en móvil. |
+| `autoComplete="one-time-code"` | Permite autocompletar códigos recibidos. |
+| `value={code}` | Muestra el código guardado en el estado. |
+| `onChange={onCodeChange}` | Actualiza el código al escribir. |
+| Botón `Iniciar sesión` | Envía el formulario al backend. |
+| `disabled={... || !code.trim()}` | No permite login sin código. |
+| `{error && ...}` | Solo muestra el error cuando existe. |
+
+### 2.5 `src/services/authService.js`
+
+| Línea o bloque | Qué significa |
+|---|---|
+| `API_URL` | Usa `VITE_API_URL`; si no existe, usa `localhost:8080`. |
+| `TOKEN_KEY` | Nombre donde se guarda el JWT. |
+| `USER_KEY` | Nombre donde se guarda el usuario. |
+| `parseResponse(response)` | Convierte la respuesta HTTP en objeto JavaScript. |
+| `response.json().catch(() => ({}))` | Intenta leer JSON; si no hay JSON, usa objeto vacío. |
+| `if (!response.ok)` | Detecta códigos HTTP 400/401/500. |
+| `throw new Error(...)` | Convierte el error del backend en excepción. |
+| `requestLoginCode(identifier)` | Solicita un código temporal. |
+| `fetch(...request-code)` | Hace `POST /api/auth/request-code`. |
+| `method: "POST"` | Indica que se envían datos. |
+| `Content-Type` | Informa que el cuerpo es JSON. |
+| `JSON.stringify(...)` | Convierte el objeto JavaScript a texto JSON. |
+| `parseResponse(response)` | Comprueba si la solicitud fue correcta. |
+| `error instanceof TypeError` | Detecta que el servidor no sea accesible. |
+| `login({ identifier, code })` | Intercambia el código por una sesión. |
+| `fetch(...auth/login)` | Hace `POST /api/auth/login`. |
+| `!data.token || !data.user` | Rechaza una respuesta sin JWT o usuario. |
+| `localStorage.setItem(...)` | Guarda sesión en el navegador. |
+| `getToken()` | Recupera el JWT guardado. |
+| `getStoredUser()` | Recupera y convierte el usuario guardado. |
+| `clearSession()` | Borra JWT y usuario del navegador. |
+
+### 2.6 `src/components/ProtectedRoute.jsx` y `src/services/apiClient.js`
+
+1. `ProtectedRoute` llama a `getToken()`.
+2. Si no encuentra token, devuelve `<Navigate to="/login" />`.
+3. Si encuentra token, devuelve `<Outlet />`.
+4. `apiClient` obtiene el mismo token.
+5. Lo envía como `Authorization: Bearer <token>`.
+6. El backend usa ese token para saber quién hace la petición.
+
+### 2.7 Resto del frontend
+
+| Archivo | Qué hace cada parte |
+|---|---|
+| `Feed.jsx` | Carga publicaciones, tendencias y permite publicar. |
+| `Profile.jsx` | Carga datos y tweets de un usuario. |
+| `Search.jsx` | Envía consultas de búsqueda. |
+| `FollowList.jsx` | Carga seguidores o seguidos según `type`. |
+| `Notifications.jsx` | Carga notificaciones paginadas. |
+| `Header.jsx` | Muestra navegación y usuario actual. |
+| `TweetComposer.jsx` | Controla el texto y llama al endpoint de tweets. |
+| `TweetItem.jsx` | Presenta una publicación y su autor. |
+| `UserList.jsx` | Presenta usuarios y acciones de seguimiento. |
+| `FollowForm.jsx` | Envía un username al endpoint de follow. |
+| `Pagination.jsx` | Cambia `page` y vuelve a cargar información. |
+| `Trends.jsx` | Presenta las tendencias recibidas. |
+| `Button.jsx` | Recibe `text`, `type`, `onClick` y `disabled`, y crea un `<button>`. |
+| `Divider.jsx` | Dibuja las líneas y el texto central. |
+| `LoginSocial.jsx` | Es un botón visual reutilizable para proveedores sociales. |
+
+### 2.8 `src/styles/index.css`
+
+- `body` define el fondo negro global.
+- `h1` define color, tamaño y peso del título original.
+- `.btn` define botones redondeados.
+- `.input-x` define inputs oscuros y bordes.
+- `.form-floating` posiciona las etiquetas flotantes.
+- `.separador-x` crea líneas a ambos lados de `or`.
+- `.login-social` define botones de Google, Apple u otros proveedores visuales.
+- `.feed-*` define sidebar, publicaciones, tarjetas, tendencias y responsive.
+- `@media` cambia el layout en pantallas pequeñas.
+
+---
+
+## 3. Backend
+
+### 3.1 `ClonXBackendApplication.java`
+
+| Código | Qué significa |
+|---|---|
+| `package com.clonx;` | Define el paquete Java. |
+| Imports de Spring | Cargan clases necesarias para iniciar la aplicación. |
+| `@SpringBootApplication` | Activa la configuración automática de Spring. |
 | `public class ...` | Declara la clase principal. |
-| `main(String[] args)` | Es el punto de entrada de Java. |
-| `SpringApplication.run(...)` | Inicia el servidor, controladores, seguridad y conexión JPA. |
+| `main(String[] args)` | Punto de entrada de la JVM. |
+| `SpringApplication.run(...)` | Inicia Tomcat, controladores, seguridad y JPA. |
 
-### 3.2 Controlador de la API
+### 3.2 `ApiController.java`: imports y variables
 
-Archivo: `backend/src/main/java/com/clonx/controller/ApiController.java`
-
-#### Dependencias y estado
-
-| Código | Función |
+| Código | Qué significa |
 |---|---|
-| `@RestController` | Convierte la clase en un controlador REST que devuelve JSON. |
-| `@RequestMapping("/api")` | Añade `/api` al inicio de cada ruta. |
-| `UserRepository users` | Busca y guarda usuarios. |
-| `TweetRepository tweets` | Busca y guarda publicaciones. |
-| `FollowRepository follows` | Administra seguidores y seguidos. |
-| `JwtService jwtService` | Crea y valida tokens JWT. |
-| `loginCodes` | Guarda temporalmente el código de cada usuario. |
+| `@RestController` | Indica que la clase responde peticiones HTTP con JSON. |
+| `@RequestMapping("/api")` | Todas las rutas empiezan por `/api`. |
+| `UserRepository users` | Acceso a la tabla de usuarios. |
+| `TweetRepository tweets` | Acceso a publicaciones. |
+| `FollowRepository follows` | Acceso a relaciones sociales. |
+| `JwtService jwtService` | Crea los tokens de sesión. |
+| `Map<String, LoginCode> loginCodes` | Guarda un código por username. |
+| `ConcurrentHashMap` | Permite usar el mapa de forma segura con varias peticiones. |
 | `SecureRandom random` | Genera códigos aleatorios. |
+| Constructor | Spring inyecta automáticamente las dependencias. |
 
-#### Modelos de entrada
+### 3.3 `ApiController.java`: records de entrada
 
-| Código | Función |
+| Código | Qué significa |
 |---|---|
-| `record Login(...)` | Representa el identificador y código del login. |
-| `record CodeRequest(...)` | Representa la solicitud de un nuevo código. |
-| `record LoginCode(...)` | Guarda el código y su fecha de expiración. |
-| `@NotBlank` | Rechaza valores vacíos. |
-| `@Valid` | Activa las validaciones del objeto recibido. |
+| `record Login(...)` | Cuerpo esperado por `/auth/login`. |
+| `@NotBlank String identifier` | El usuario/correo es obligatorio. |
+| `@NotBlank String code` | El código es obligatorio. |
+| `record CodeRequest(...)` | Cuerpo esperado por `/auth/request-code`. |
+| `record LoginCode(...)` | Objeto interno con código y vencimiento. |
+| `record TweetInput(...)` | Texto recibido al crear un tweet. |
+| `@Size(max=280)` | Limita un tweet a 280 caracteres. |
+| `record FollowInput(...)` | Username recibido al seguir. |
 
-#### Endpoint de salud
+### 3.4 `ApiController.java`: endpoints de login
 
-```java
-@GetMapping("/health")
-Map<String, String> health() {
-    return Map.of("status", "ok");
-}
-```
-
-- `@GetMapping("/health")` responde a `GET /api/health`.
-- `health()` es el método ejecutado.
-- `Map.of(...)` devuelve JSON:
-
-```json
-{"status":"ok"}
-```
-
-#### Solicitud del código
-
-```java
-@PostMapping("/auth/request-code")
-ResponseEntity<Map<String, String>> requestCode(
-        @Valid @RequestBody CodeRequest input) {
-    AppUser user = findUser(input.identifier());
-    String code = String.format("%06d", random.nextInt(1_000_000));
-    loginCodes.put(
-        user.getUsername().toLowerCase(Locale.ROOT),
-        new LoginCode(code, Instant.now().plusSeconds(600))
-    );
-    return ResponseEntity.ok(
-        Map.of("message", "Código enviado.", "code", code)
-    );
-}
-```
-
-| Línea o bloque | Función |
+| Código | Qué significa |
 |---|---|
-| `@PostMapping(...)` | Expone `POST /api/auth/request-code`. |
-| `@RequestBody` | Convierte el JSON recibido en `CodeRequest`. |
-| `findUser(...)` | Busca por username o correo. |
-| `random.nextInt(...)` | Genera un número entre 0 y 999999. |
-| `String.format("%06d", ...)` | Lo convierte siempre en seis dígitos. |
-| `plusSeconds(600)` | Hace que el código expire en 600 segundos. |
-| `loginCodes.put(...)` | Guarda o reemplaza el código pendiente. |
-| `ResponseEntity.ok(...)` | Devuelve respuesta HTTP 200. |
+| `@GetMapping("/health")` | Expone la comprobación de salud. |
+| `Map.of("status","ok")` | Devuelve el JSON de salud. |
+| `@PostMapping("/auth/request-code")` | Expone la solicitud de código. |
+| `@RequestBody CodeRequest input` | Lee el JSON recibido. |
+| `findUser(input.identifier())` | Busca por username o email. |
+| `random.nextInt(1_000_000)` | Produce un número de 0 a 999999. |
+| `String.format("%06d", ...)` | Lo convierte en seis posiciones. |
+| `Instant.now().plusSeconds(600)` | Define vencimiento a diez minutos. |
+| `loginCodes.put(...)` | Guarda el código en memoria. |
+| `ResponseEntity.ok(...)` | Devuelve HTTP 200 y el código local. |
+| `@PostMapping("/auth/login")` | Expone la validación del código. |
+| `loginCodes.get(key)` | Recupera el código guardado. |
+| `loginCode == null` | Detecta que nunca se solicitó código. |
+| `expiresAt().isBefore(...)` | Detecta código expirado. |
+| `!code().equals(...)` | Detecta código incorrecto. |
+| `ResponseStatusException(UNAUTHORIZED, ...)` | Devuelve HTTP 401. |
+| `loginCodes.remove(key)` | Hace que el código sea de un solo uso. |
+| `jwtService.create(...)` | Genera el JWT. |
+| `userDto(...)` | Devuelve la información pública del usuario. |
 
-> En desarrollo local el código se devuelve en la respuesta para poder probarlo. En producción debe enviarse por correo o SMS.
+### 3.5 `ApiController.java`: búsqueda y endpoints sociales
 
-#### Login con código
-
-```java
-@PostMapping("/auth/login")
-ResponseEntity<Map<String, Object>> login(
-        @Valid @RequestBody Login input) {
-    AppUser user = findUser(input.identifier());
-    String key = user.getUsername().toLowerCase(Locale.ROOT);
-    LoginCode loginCode = loginCodes.get(key);
-
-    if (loginCode == null
-            || loginCode.expiresAt().isBefore(Instant.now())
-            || !loginCode.code().equals(input.code().trim())) {
-        throw new ResponseStatusException(
-            HttpStatus.UNAUTHORIZED,
-            "Código inválido o expirado."
-        );
-    }
-
-    loginCodes.remove(key);
-    return ResponseEntity.ok(Map.of(
-        "token", jwtService.create(user.getUsername()),
-        "user", userDto(user, null)
-    ));
-}
-```
-
-| Línea o bloque | Función |
+| Código o método | Qué significa |
 |---|---|
-| `@PostMapping("/auth/login")` | Expone `POST /api/auth/login`. |
-| `findUser(...)` | Identifica al usuario. |
-| `loginCodes.get(key)` | Recupera su código pendiente. |
-| `loginCode == null` | Rechaza si nunca pidió código. |
-| `isBefore(Instant.now())` | Rechaza si ya expiró. |
-| `!equals(...)` | Rechaza si el código no coincide. |
-| `ResponseStatusException` | Devuelve HTTP 401 con mensaje claro. |
-| `loginCodes.remove(key)` | Impide reutilizar el código. |
-| `jwtService.create(...)` | Genera el token de sesión. |
-| `userDto(...)` | Devuelve datos públicos del usuario. |
+| `findUser` | Quita espacios y busca username o email ignorando mayúsculas. |
+| `me(Authentication)` | Obtiene el usuario que representa el JWT. |
+| `tweet(...)` | Valida y guarda una publicación. |
+| `feed(...)` | Busca tweets propios y de cuentas seguidas. |
+| `pageable(...)` | Valida página/tamaño y ordena resultados. |
+| `users(query, authentication)` | Filtra usuarios por nombre o username. |
+| `trends()` | Cuenta palabras frecuentes de los tweets. |
+| `notifications(...)` | Busca relaciones que producen notificaciones. |
+| `profile(...)` | Devuelve un usuario concreto. |
+| `userTweets(...)` | Devuelve tweets de un usuario. |
+| `followers(...)` | Devuelve seguidores paginados. |
+| `following(...)` | Devuelve cuentas seguidas. |
+| `follow(...)` | Crea una relación, evitando seguirse a sí mismo o duplicar. |
+| `unfollow(...)` | Elimina una relación existente. |
+| `current(...)` | Busca la entidad del usuario autenticado. |
+| `tweetDto`, `userDto`, `pageDto` | Transforman entidades en JSON de respuesta. |
 
-#### Endpoints sociales
+### 3.6 `SecurityConfig.java`
 
-| Endpoint | Función |
+| Código o concepto | Qué significa |
 |---|---|
-| `GET /api/users/me` | Devuelve el usuario autenticado. |
-| `GET /api/feed` | Devuelve publicaciones paginadas. |
-| `POST /api/tweets` | Crea una publicación. |
-| `GET /api/users` | Busca usuarios. |
-| `GET /api/users/{username}` | Devuelve un perfil. |
-| `GET /api/trends` | Calcula tendencias. |
-| `GET /api/notifications` | Devuelve notificaciones. |
-| `POST /api/follows` | Sigue a otro usuario. |
-| `DELETE /api/follows/{username}` | Deja de seguir. |
+| `@Configuration` | Registra esta clase en Spring. |
+| `SecurityFilterChain` | Define las reglas de seguridad HTTP. |
+| `csrf(...disable())` | Desactiva CSRF para esta API con JWT. |
+| `cors(...)` | Activa comunicación frontend-backend. |
+| `STATELESS` | El backend no guarda sesión de navegador. |
+| `OPTIONS permitAll` | Permite solicitudes preliminares CORS. |
+| `auth/login permitAll` | Permite iniciar sesión sin JWT. |
+| `auth/request-code permitAll` | Permite pedir código sin JWT. |
+| `health permitAll` | Permite comprobar disponibilidad. |
+| `anyRequest authenticated` | Protege todas las demás rutas. |
+| `addFilterBefore(jwtFilter, ...)` | Valida JWT antes del controlador. |
 
-Los endpoints protegidos reciben el usuario desde `Authentication`, que fue creado por el filtro JWT.
+### 3.7 `JwtFilter.java`
 
-### 3.3 Seguridad
+1. Lee el encabezado `Authorization`.
+2. Comprueba que comience por `Bearer `.
+3. Elimina `Bearer ` y conserva solo el token.
+4. Llama a `jwt.valid(token)`.
+5. Extrae el username con `jwt.username(token)`.
+6. Comprueba que el usuario siga en la base de datos.
+7. Crea una autenticación Spring con autoridad `USER`.
+8. Guarda la autenticación en `SecurityContextHolder`.
+9. Continúa la petición con `chain.doFilter`.
 
-#### `SecurityConfig.java`
+### 3.8 `JwtService.java`
 
-| Configuración | Función |
+| Método o campo | Qué significa |
 |---|---|
-| `@Configuration` | Registra la configuración como componente Spring. |
-| `csrf(...disable())` | Desactiva CSRF para esta API stateless. |
-| `cors(...)` | Permite llamadas desde el frontend local. |
-| `SessionCreationPolicy.STATELESS` | No guarda sesiones tradicionales. |
-| `permitAll()` | Hace públicos login, solicitud de código, salud y errores. |
-| `authenticated()` | Exige JWT en las demás rutas. |
-| `addFilterBefore(...)` | Ejecuta `JwtFilter` antes de los filtros estándar. |
+| Secreto JWT | Clave usada para firmar tokens. |
+| Duración | Tiempo durante el que el token es válido. |
+| `create(username)` | Crea y firma un token. |
+| `valid(token)` | Verifica firma y vencimiento. |
+| `username(token)` | Lee el sujeto del token. |
 
-#### `JwtFilter.java`
+### 3.9 Modelos
 
-1. Lee `Authorization`.
-2. Comprueba que empiece por `Bearer `.
-3. Extrae el token quitando los primeros siete caracteres.
-4. Comprueba firma y expiración con `JwtService`.
-5. Obtiene el username.
-6. Busca si el usuario sigue existiendo.
-7. Guarda la autenticación en `SecurityContextHolder`.
-8. Continúa la petición con `chain.doFilter`.
-
-#### `JwtService.java`
-
-- `create` firma un JWT con el username.
-- `valid` verifica firma y expiración.
-- `username` lee el sujeto del token.
-- El secreto se obtiene de `JWT_SECRET`.
-
-### 3.4 Modelos y repositorios
-
-| Archivo | Función |
+| Archivo | Explicación |
 |---|---|
-| `AppUser.java` | Mapea la tabla `users`. |
-| `Tweet.java` | Mapea publicaciones y su autor. |
-| `Follow.java` | Mapea relaciones entre usuarios. |
-| `UserRepository.java` | Consultas de usuarios. |
-| `TweetRepository.java` | Consultas paginadas de tweets. |
-| `FollowRepository.java` | Consultas de seguidores y seguidos. |
+| `AppUser.java` | `@Entity` conecta la clase con `users`; `@Id` identifica filas; getters leen datos. |
+| `Tweet.java` | Guarda contenido, autor y fecha; `@ManyToOne` conecta con `AppUser`. |
+| `Follow.java` | Guarda follower, followed y fecha; conecta dos usuarios. |
 
-Anotaciones principales:
+### 3.10 Repositorios
 
-- `@Entity`: la clase representa una tabla.
-- `@Table`: indica el nombre de la tabla.
-- `@Id`: identifica la fila.
-- `@GeneratedValue`: genera el ID automáticamente.
-- `@ManyToOne`: relaciona una fila con otro usuario.
-- `Pageable`: permite paginar resultados.
-
-### 3.5 Configuración y datos iniciales
-
-#### `application.properties`
-
-| Propiedad | Función |
+| Archivo | Explicación |
 |---|---|
-| `server.port=8080` | Publica el backend en el puerto 8080. |
-| `spring.datasource.url` | Define la conexión a SQL Server. |
-| `spring.jpa.hibernate.ddl-auto=validate` | Comprueba que el esquema exista. |
-| `app.jwt.secret` | Configura la clave para firmar JWT. |
+| `UserRepository.java` | Spring genera búsquedas como `findByUsernameIgnoreCase`. |
+| `TweetRepository.java` | Spring genera consultas de tweets por autor y página. |
+| `FollowRepository.java` | Spring genera consultas y borrados de relaciones. |
 
-#### `SeedData.java`
+### 3.11 Configuración y datos
 
-1. Spring ejecuta el `CommandLineRunner` al arrancar.
-2. Busca usuarios demo.
-3. Crea los que no existan.
-4. Inserta publicaciones demo.
-5. Inserta relaciones de seguimiento.
-6. Comprueba existencia para no duplicar datos.
-
-## 4. Frontend: cómo está organizado
-
-### 4.1 Arranque y rutas
-
-#### `main.jsx`
-
-| Código | Función |
-|---|---|
-| `createRoot(...)` | Crea la raíz React. |
-| `BrowserRouter` | Permite navegación con URLs. |
-| `App` | Carga las rutas de la aplicación. |
-| Import de CSS | Carga estilos globales y Bootstrap. |
-
-#### `App.jsx`
-
-| Ruta | Componente | Acceso |
+| Archivo | Línea o concepto | Qué significa |
 |---|---|---|
-| `/login` | `Login` | Público |
-| `/feed` | `Feed` | Protegido |
-| `/search` | `Search` | Protegido |
-| `/notifications` | `Notifications` | Protegido |
-| `/users/:username` | `Profile` | Protegido |
-| `*` | `Navigate` | Redirige a login |
+| `application.properties` | `server.port=8080` | Puerto del backend. |
+| `application.properties` | `spring.datasource.url` | Dirección de SQL Server y base `xclone`. |
+| `application.properties` | `ddl-auto=validate` | Comprueba el esquema sin modificarlo. |
+| `application.properties` | `app.jwt.secret` | Secreto configurable para JWT. |
+| `SeedData.java` | `@Configuration` | Registra carga inicial. |
+| `SeedData.java` | `CommandLineRunner` | Ejecuta el seed al iniciar. |
+| `SeedData.java` | `users.find...` | Evita usuarios duplicados. |
+| `SeedData.java` | `tweets.exists...` | Evita publicaciones duplicadas. |
+| `SeedData.java` | `follows.exists...` | Evita relaciones duplicadas. |
 
-`ProtectedRoute` comprueba si existe token antes de mostrar las rutas privadas.
+---
 
-### 4.2 `pages/Login.jsx`
+## 4. Cómo leer cualquier línea de este proyecto
 
-| Código | Función |
-|---|---|
-| `useState` | Guarda usuario, código, errores y carga. |
-| `useNavigate` | Permite ir a `/feed`. |
-| `handleSubmit` | Procesa el segundo paso del login. |
-| `preventDefault()` | Evita recargar el navegador. |
-| `setLoading(true)` | Desactiva acciones mientras espera. |
-| `login({ identifier, code })` | Envía el código al backend. |
-| `navigate("/feed")` | Redirige tras login correcto. |
-| `catch` | Muestra errores de red o validación. |
-| `<EmailLoginForm />` | Renderiza el formulario. |
-| `<Divider />` | Renderiza el separador. |
-| `login-right` | Renderiza el logo lateral. |
+1. **Import**: trae una clase o función de otro archivo.
+2. **Variable**: guarda un valor.
+3. **Función/método**: agrupa instrucciones reutilizables.
+4. **Condición `if`**: decide según una regla.
+5. **`return`**: devuelve un valor o una respuesta.
+6. **`await`**: espera una operación asíncrona.
+7. **Anotación Java `@...`**: indica a Spring cómo tratar una clase o método.
+8. **Endpoint**: método Java conectado a una URL HTTP.
+9. **Repositorio**: objeto que consulta la base de datos.
+10. **Componente React**: función que devuelve HTML usando JSX.
 
-### 4.3 `components/EmailLoginForm.jsx`
-
-1. Recibe valores y callbacks desde `Login`.
-2. Renderiza el campo de correo o usuario.
-3. Si no hay código solicitado, muestra `Enviar código`.
-4. Solicita el código con `requestLoginCode`.
-5. Si la solicitud funciona, muestra `Código de acceso`.
-6. El botón `Iniciar sesión` ejecuta `onSubmit`.
-7. No contiene ningún campo de contraseña.
-
-### 4.4 `services/authService.js`
-
-| Función | Función |
-|---|---|
-| `API_URL` | Selecciona la URL del backend. |
-| `parseResponse` | Procesa JSON y errores HTTP. |
-| `requestLoginCode` | Solicita el código temporal. |
-| `login` | Intercambia código por JWT. |
-| `getToken` | Recupera el JWT guardado. |
-| `getStoredUser` | Recupera el usuario guardado. |
-| `clearSession` | Borra la sesión local. |
-
-### 4.5 `services/apiClient.js`
-
-1. Recibe método, ruta y datos.
-2. Obtiene el token con `getToken`.
-3. Añade `Authorization: Bearer <JWT>`.
-4. Envía la petición con `fetch`.
-5. Convierte la respuesta JSON.
-6. Si el token dejó de ser válido, limpia la sesión.
-
-### 4.6 Páginas y componentes
-
-| Archivo | Responsabilidad |
-|---|---|
-| `Feed.jsx` | Feed, composición y tendencias. |
-| `Profile.jsx` | Perfil y publicaciones de usuario. |
-| `Search.jsx` | Búsqueda de usuarios. |
-| `FollowList.jsx` | Seguidores o seguidos. |
-| `Notifications.jsx` | Notificaciones. |
-| `Header.jsx` | Navegación y sesión actual. |
-| `TweetComposer.jsx` | Formulario para publicar. |
-| `TweetItem.jsx` | Tarjeta de publicación. |
-| `UserList.jsx` | Lista y acciones sobre usuarios. |
-| `FollowForm.jsx` | Formulario para seguir. |
-| `Pagination.jsx` | Controles de paginación. |
-| `Trends.jsx` | Lista de tendencias. |
-| `Button.jsx` | Botón reutilizable. |
-| `Divider.jsx` | Separador visual. |
-
-### 4.7 `styles/index.css`
-
-- Define el fondo oscuro y colores globales.
-- Estiliza inputs, botones, formularios y separadores.
-- Organiza columnas del login.
-- Organiza sidebar, feed y panel derecho.
-- Las media queries adaptan la aplicación a pantallas pequeñas.
-
-## 5. Qué ocurre en una petición protegida
-
-```text
-React
-  │ fetch + Authorization: Bearer JWT
-  ▼
-Spring Security
-  │ JwtFilter valida token
-  ▼
-ApiController
-  │ consulta repositorio
-  ▼
-SQL Server
-  │ devuelve datos
-  ▼
-JSON → React
-```
-
-## 6. Ejecución local
-
-### Backend
+## 5. Ejecución
 
 ```powershell
 cd C:\Users\AndresH\Documents\xclone\backend
 mvn spring-boot:run
 ```
 
-Comprobación:
-
-```text
-GET http://localhost:8080/api/health
-```
-
-Respuesta esperada:
-
-```json
-{"status":"ok"}
-```
-
-### Frontend
-
 ```powershell
 cd C:\Users\AndresH\Documents\xclone\frontend\ClonX
 npm run dev
 ```
 
-## 7. Nota de producción
+Backend:
 
-El código se devuelve actualmente en la respuesta de `request-code` porque es un proyecto local de demostración. En producción debe enviarse mediante correo, SMS o un proveedor de autenticación y nunca exponerse en JSON.
+```text
+GET http://localhost:8080/api/health
+```
+
+Respuesta correcta:
+
+```json
+{"status":"ok"}
+```
+
+> El código se devuelve en JSON solo para desarrollo local. En producción debe enviarse por correo o SMS y no exponerse en la respuesta.
