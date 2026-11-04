@@ -7,7 +7,8 @@ import { login } from "../services/authService";
 export function Login() {
   const navigate = useNavigate();
   const [identifier, setIdentifier] = useState("");
-  const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [codeRequested, setCodeRequested] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -16,7 +17,7 @@ export function Login() {
     setLoading(true);
     setError("");
     try {
-      await login({ identifier, password });
+      await login({ identifier, code });
       navigate("/feed");
     } catch (loginError) {
       setError(loginError.message);
@@ -33,10 +34,13 @@ export function Login() {
             <div className="login-form">
               <h1>Lo que está<br />pasando<br />ahora.</h1>
               <div className="d-flex flex-column gap-3">
-                <div className="small text-secondary">Inicia sesión con tu correo electrónico o nombre de usuario.</div>
-                <EmailLoginForm identifier={identifier} password={password} error={error} loading={loading}
+                <div className="small text-secondary">Escribe tu correo electrónico o nombre de usuario y recibe un código de acceso.</div>
+                <EmailLoginForm identifier={identifier} code={code} codeRequested={codeRequested}
+                  error={error} loading={loading}
                   onIdentifierChange={(event) => setIdentifier(event.target.value)}
-                  onPasswordChange={(event) => setPassword(event.target.value)}
+                  onCodeChange={(event) => setCode(event.target.value)}
+                  onCodeRequested={() => setCodeRequested(true)}
+                  onError={setError}
                   onSubmit={handleSubmit} />
                 <Divider />
                 <p className="enlace">Usa una cuenta existente. El registro no está habilitado.</p>

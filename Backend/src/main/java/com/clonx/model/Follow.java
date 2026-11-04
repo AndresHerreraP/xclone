@@ -8,5 +8,5 @@ public class Follow {
  @Column(name="created_at",nullable=false) private OffsetDateTime createdAt=OffsetDateTime.now();
  protected Follow(){}
  public Follow(AppUser a,AppUser b){follower=a;followed=b;createdAt=OffsetDateTime.now();}
- public Long getId(){return id;} public AppUser getFollower(){return follower;} public AppUser getFollowed(){return followed;}
+ public Long getId(){return id;} public AppUser getFollower(){return follower;} public AppUser getFollowed(){return followed;} public OffsetDateTime getCreatedAt(){return createdAt;}
 }

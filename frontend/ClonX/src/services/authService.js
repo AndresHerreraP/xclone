@@ -11,12 +11,28 @@ async function parseResponse(response) {
   return data;
 }
 
-export async function login({ identifier, password }) {
+export async function requestLoginCode(identifier) {
+  try {
+    const response = await fetch(`${API_URL}/api/auth/request-code`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ identifier: identifier.trim() }),
+    });
+    return await parseResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error("No se pudo conectar con el backend. Verifica que esté ejecutándose en el puerto 8080.", { cause: error });
+    }
+    throw error;
+  }
+}
+
+export async function login({ identifier, code }) {
   try {
     const response = await fetch(`${API_URL}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ identifier: identifier.trim(), password }),
+      body: JSON.stringify({ identifier: identifier.trim(), code: code.trim() }),
     });
     const data = await parseResponse(response);
     if (!data.token || !data.user) {

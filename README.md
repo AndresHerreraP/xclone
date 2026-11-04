@@ -27,7 +27,7 @@ xclone/
 
 ### Backend
 
-- Java 17
+- Java 25
 - Spring Boot 3.4.5
 - Spring Data JPA
 - Spring Security
@@ -44,7 +44,7 @@ xclone/
 
 ## Funcionalidades
 
-- Inicio de sesión con usuario o correo y contraseña protegida con BCrypt.
+- Inicio de sesión sin contraseña: el usuario recibe un código temporal de un solo uso.
 - Feed con publicaciones propias y de las cuentas seguidas.
 - Crear publicaciones de hasta 280 caracteres.
 - Acciones debajo de cada publicación: responder, republicar, me gusta y compartir.
@@ -72,7 +72,7 @@ jdbc:sqlserver://localhost:1433;databaseName=xclone;encrypt=true;trustServerCert
 
 ## Ejecutar el backend
 
-Requisitos: JDK 17, Maven y SQL Server activo.
+Requisitos: JDK 25, Maven y SQL Server activo.
 
 ```powershell
 cd C:\Users\AndresH\Documents\xclone\backend

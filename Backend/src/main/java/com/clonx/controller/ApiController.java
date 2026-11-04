@@ -8,10 +8,12 @@ import jakarta.validation.constraints.*;
 import org.springframework.data.domain.*;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 @RequestMapping("/api")
@@ -20,26 +22,45 @@ public class ApiController {
  private final TweetRepository tweets;
  private final FollowRepository follows;
  private final JwtService jwtService;
- private final PasswordEncoder passwordEncoder;
+ private final Map<String, LoginCode> loginCodes = new ConcurrentHashMap<>();
+ private final SecureRandom random = new SecureRandom();
 
- public ApiController(UserRepository u,TweetRepository t,FollowRepository f,JwtService j,PasswordEncoder p){
-  users=u;tweets=t;follows=f;jwtService=j;passwordEncoder=p;
+ public ApiController(UserRepository u,TweetRepository t,FollowRepository f,JwtService j){
+  users=u;tweets=t;follows=f;jwtService=j;
  }
 
- record Login(@NotBlank String identifier,@NotBlank String password){}
+ record Login(@NotBlank String identifier,@NotBlank String code){}
+ record CodeRequest(@NotBlank String identifier){}
+ record LoginCode(String code, Instant expiresAt){}
  record TweetInput(@NotBlank @Size(max=280) String content){}
  record FollowInput(@NotBlank String username){}
 
  @GetMapping("/health") Map<String,String> health(){return Map.of("status","ok");}
 
+ @PostMapping("/auth/request-code")
+ ResponseEntity<Map<String,String>> requestCode(@Valid @RequestBody CodeRequest input){
+  AppUser user=findUser(input.identifier());
+  String code=String.format("%06d",random.nextInt(1_000_000));
+  loginCodes.put(user.getUsername().toLowerCase(Locale.ROOT),new LoginCode(code,Instant.now().plusSeconds(600)));
+  return ResponseEntity.ok(Map.of("message","Código enviado.","code",code));
+ }
+
  @PostMapping("/auth/login")
  ResponseEntity<Map<String,Object>> login(@Valid @RequestBody Login input){
-  String identifier=input.identifier().trim();
-  AppUser user=users.findByUsernameIgnoreCase(identifier).or(()->users.findByEmailIgnoreCase(identifier))
-   .orElseThrow(()->new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Credenciales incorrectas."));
-  if(!passwordEncoder.matches(input.password(),user.getPasswordHash()))
-   throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Credenciales incorrectas.");
+  AppUser user=findUser(input.identifier());
+  String key=user.getUsername().toLowerCase(Locale.ROOT);
+  LoginCode loginCode=loginCodes.get(key);
+  if(loginCode==null||loginCode.expiresAt().isBefore(Instant.now())||!loginCode.code().equals(input.code().trim())){
+   throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Código inválido o expirado.");
+  }
+  loginCodes.remove(key);
   return ResponseEntity.ok(Map.of("token",jwtService.create(user.getUsername()),"user",userDto(user,null)));
+ }
+
+ private AppUser findUser(String identifier){
+  String normalized=identifier.trim();
+  return users.findByUsernameIgnoreCase(normalized).or(()->users.findByEmailIgnoreCase(normalized))
+   .orElseThrow(()->new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Usuario no encontrado."));
  }
 
  @GetMapping("/users/me")

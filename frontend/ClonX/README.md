@@ -30,7 +30,7 @@ VITE_API_URL=http://localhost:8080
 
 ## Pantallas
 
-- `/login`: acceso mediante usuario o correo y contraseña.
+- `/login`: acceso mediante usuario o correo y código de acceso de un solo uso.
 - `- `/feed`: publicaciones, compositor de tweets y panel lateral.
 - `/search`: búsqueda de usuarios, tendencias y cuentas sugeridas.
 - `/notifications`: notificaciones de seguidores, likes y respuestas.

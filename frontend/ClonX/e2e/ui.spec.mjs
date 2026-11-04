@@ -2,20 +2,25 @@ import { chromium } from "playwright";
 
 const BASE_URL = process.env.E2E_BASE_URL || "http://localhost:5173";
 const TEST_USERNAME = process.env.E2E_USERNAME;
-const TEST_PASSWORD = process.env.E2E_PASSWORD;
 
 const browser = await chromium.launch();
 const page = await browser.newPage();
 let failures = 0;
 
 try {
-  if (!TEST_USERNAME || !TEST_PASSWORD) {
-    throw new Error("Define E2E_USERNAME y E2E_PASSWORD para ejecutar la prueba.");
+  if (!TEST_USERNAME) {
+    throw new Error("Define E2E_USERNAME para ejecutar la prueba.");
   }
   await page.goto(`${BASE_URL}/login`);
 
   await page.getByLabel("Correo electrónico o nombre de usuario").fill(TEST_USERNAME);
-  await page.getByLabel("Contraseña").fill(TEST_PASSWORD);
+  const codeResponsePromise = page.waitForResponse((response) =>
+    response.url().endsWith("/api/auth/request-code") && response.request().method() === "POST"
+  );
+  await page.getByRole("button", { name: "Enviar código" }).click();
+  const codeResponse = await codeResponsePromise;
+  const { code } = await codeResponse.json();
+  await page.getByLabel("Código de acceso").fill(code);
   await page.getByRole("button", { name: "Iniciar sesión" }).click();
   await page.waitForURL("**/feed", { timeout: 10000 });
   console.log("PASS: inicio de sesión y acceso al feed");

@@ -1,6 +1,6 @@
 # Backend de ClonX
 
-API de ClonX hecha con Java 17, Spring Boot, SQL Server y JWT.
+API de ClonX hecha con Java 25, Spring Boot, SQL Server y JWT.
 
 ## Antes de ejecutar
 
@@ -48,13 +48,14 @@ java "-Djava.library.path=native-auth" -jar target\clon-x-backend-0.0.1-SNAPSHOT
 
 ## Inicio de sesión
 
-ClonX no tiene registro público. El usuario inicia sesión con su nombre de usuario o correo y la contraseña de una cuenta existente:
+ClonX no tiene registro público. El usuario solicita un código con su nombre de usuario o correo y lo usa para iniciar sesión:
 
 ```text
+POST /api/auth/request-code
 POST /api/auth/login
 ```
 
-La contraseña se compara con BCrypt y, si es correcta, el backend devuelve un JWT.
+`/api/auth/request-code` genera un código temporal de un solo uso. En este proyecto local el código se devuelve en la respuesta para poder probar el flujo; en producción debe enviarse por correo o SMS. `/api/auth/login` valida ese código y devuelve un JWT.
 
 ## Endpoints principales
 
