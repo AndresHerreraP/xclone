@@ -1,12 +1,12 @@
 import { Button } from "./Button";
 import { requestLoginCode } from "../services/authService";
 
-export function EmailLoginForm({ identifier, code, codeRequested, needsRegistration, profile, error, loading = false, onIdentifierChange, onCodeChange, onProfileChange, onCodeRequested, onRegistrationRequired, onError, onSubmit }) {
+export function EmailLoginForm({ identifier, code, generatedCode, codeRequested, needsRegistration, profile, error, loading = false, onIdentifierChange, onCodeChange, onProfileChange, onCodeRequested, onRegistrationRequired, onError, onSubmit }) {
   async function handleRequestCode() {
     try {
       const response = await requestLoginCode(identifier, needsRegistration ? profile : {});
       if (response.registered) {
-        onCodeRequested();
+        onCodeRequested(response.code);
       } else {
         onRegistrationRequired();
       }
@@ -60,6 +60,7 @@ export function EmailLoginForm({ identifier, code, codeRequested, needsRegistrat
         ) : (
           <>
           <div className="small text-secondary">Escribe el código que recibiste.</div>
+          {generatedCode && <div className="login-code-preview">Tu código es: <strong>{generatedCode}</strong></div>}
           <Button color="btn-light" text={loading ? "Entrando..." : "Iniciar sesión"} type="submit"
             disabled={loading || !code.trim()} />
           </>

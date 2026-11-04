@@ -8,6 +8,7 @@ export function Login() {
   const navigate = useNavigate();
   const [identifier, setIdentifier] = useState("");
   const [code, setCode] = useState("");
+  const [generatedCode, setGeneratedCode] = useState("");
   const [codeRequested, setCodeRequested] = useState(false);
   const [needsRegistration, setNeedsRegistration] = useState(false);
   const [profile, setProfile] = useState({ fullName: "", username: "", email: "" });
@@ -37,13 +38,17 @@ export function Login() {
               <h1>Lo que está<br />pasando<br />ahora.</h1>
               <div className="d-flex flex-column gap-3">
                 <div className="small text-secondary">Escribe tu correo electrónico o nombre de usuario y recibe un código de acceso.</div>
-                <EmailLoginForm identifier={identifier} code={code} codeRequested={codeRequested}
+                <EmailLoginForm identifier={identifier} code={code} generatedCode={generatedCode} codeRequested={codeRequested}
                   error={error} loading={loading}
                   needsRegistration={needsRegistration} profile={profile}
                   onIdentifierChange={(event) => setIdentifier(event.target.value)}
                   onCodeChange={(event) => setCode(event.target.value)}
                   onProfileChange={(event) => setProfile({ ...profile, [event.target.name]: event.target.value })}
-                  onCodeRequested={() => setCodeRequested(true)}
+                  onCodeRequested={(value) => {
+                    setCode("");
+                    setGeneratedCode(value);
+                    setCodeRequested(true);
+                  }}
                   onRegistrationRequired={() => setNeedsRegistration(true)}
                   onError={setError}
                   onSubmit={handleSubmit} />

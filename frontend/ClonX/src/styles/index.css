@@ -52,6 +52,20 @@ h1 {
   color: #71767b;
 }
 
+.login-code-preview {
+  color: #1d9bf0;
+  font-size: 15px;
+  margin-top: -6px;
+  width: 60%;
+  position: relative;
+  left: 70px;
+}
+
+.login-code-preview strong {
+  color: #fff;
+  letter-spacing: 0.18em;
+}
+
 .input-x:focus {
   border: 2px solid #2888c9;
   box-shadow: none;
