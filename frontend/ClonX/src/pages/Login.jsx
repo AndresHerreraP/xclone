@@ -48,7 +48,7 @@ export function Login() {
                   onError={setError}
                   onSubmit={handleSubmit} />
                 <Divider />
-                <p className="enlace">Usa una cuenta existente. El registro no está habilitado.</p>
+                <p className="enlace">Si no tienes cuenta, la crearemos con tus datos.</p>
               </div>
             </div>
           </div>
