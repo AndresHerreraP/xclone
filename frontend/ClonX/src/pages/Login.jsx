@@ -45,7 +45,7 @@ export function Login() {
                   onCodeChange={(event) => setCode(event.target.value)}
                   onProfileChange={(event) => setProfile({ ...profile, [event.target.name]: event.target.value })}
                   onCodeRequested={(value) => {
-                    setCode("");
+                    setCode(value);
                     setGeneratedCode(value);
                     setCodeRequested(true);
                   }}
