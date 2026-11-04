@@ -9,12 +9,13 @@ Este documento sigue el código en el mismo orden en que aparece. Primero se exp
 2. React muestra Login.jsx.
 3. La persona escribe usuario o correo.
 4. El frontend llama POST /api/auth/request-code.
-5. El backend genera un código de seis dígitos.
-6. La persona escribe el código.
-7. El frontend llama POST /api/auth/login.
-8. El backend valida el código y crea un JWT.
-9. El frontend guarda el JWT y abre /feed.
-10. En las siguientes peticiones, el JWT identifica al usuario.
+5. Si la cuenta no existe, el frontend pide nombre, username y correo para crearla.
+6. El backend genera un código de seis dígitos.
+7. La misma caja de texto cambia para recibir el código.
+8. El frontend llama POST /api/auth/login.
+9. El backend valida el código y crea un JWT.
+10. El frontend guarda el JWT y abre /feed.
+11. En las siguientes peticiones, el JWT identifica al usuario.
 ```
 
 No existe campo de contraseña. El código temporal es la única credencial del login.

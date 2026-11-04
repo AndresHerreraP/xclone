@@ -9,6 +9,8 @@ export function Login() {
   const [identifier, setIdentifier] = useState("");
   const [code, setCode] = useState("");
   const [codeRequested, setCodeRequested] = useState(false);
+  const [needsRegistration, setNeedsRegistration] = useState(false);
+  const [profile, setProfile] = useState({ fullName: "", username: "", email: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -37,9 +39,12 @@ export function Login() {
                 <div className="small text-secondary">Escribe tu correo electrónico o nombre de usuario y recibe un código de acceso.</div>
                 <EmailLoginForm identifier={identifier} code={code} codeRequested={codeRequested}
                   error={error} loading={loading}
+                  needsRegistration={needsRegistration} profile={profile}
                   onIdentifierChange={(event) => setIdentifier(event.target.value)}
                   onCodeChange={(event) => setCode(event.target.value)}
+                  onProfileChange={(event) => setProfile({ ...profile, [event.target.name]: event.target.value })}
                   onCodeRequested={() => setCodeRequested(true)}
+                  onRegistrationRequired={() => setNeedsRegistration(true)}
                   onError={setError}
                   onSubmit={handleSubmit} />
                 <Divider />

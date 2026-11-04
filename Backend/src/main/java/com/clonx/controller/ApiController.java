@@ -30,7 +30,7 @@ public class ApiController {
  }
 
  record Login(@NotBlank String identifier,@NotBlank String code){}
- record CodeRequest(@NotBlank String identifier){}
+ record CodeRequest(@NotBlank String identifier,String fullName,String username,String email){}
  record LoginCode(String code, Instant expiresAt){}
  record TweetInput(@NotBlank @Size(max=280) String content){}
  record FollowInput(@NotBlank String username){}
@@ -38,11 +38,20 @@ public class ApiController {
  @GetMapping("/health") Map<String,String> health(){return Map.of("status","ok");}
 
  @PostMapping("/auth/request-code")
- ResponseEntity<Map<String,String>> requestCode(@Valid @RequestBody CodeRequest input){
-  AppUser user=findUser(input.identifier());
+ ResponseEntity<Map<String,Object>> requestCode(@Valid @RequestBody CodeRequest input){
+  AppUser user=users.findByUsernameIgnoreCase(input.identifier().trim()).or(()->users.findByEmailIgnoreCase(input.identifier().trim())).orElse(null);
+  if(user==null){
+   if(input.fullName()==null||input.fullName().isBlank()||input.username()==null||input.username().isBlank()||input.email()==null||input.email().isBlank()){
+    return ResponseEntity.ok(Map.of("registered",false,"message","Completa tus datos para crear la cuenta."));
+   }
+   if(users.existsByUsernameIgnoreCase(input.username().trim())||users.existsByEmailIgnoreCase(input.email().trim())){
+    throw new ResponseStatusException(HttpStatus.CONFLICT,"El usuario o correo ya está registrado.");
+   }
+   user=users.save(new AppUser(input.fullName().trim(),input.username().trim(),input.email().trim()));
+  }
   String code=String.format("%06d",random.nextInt(1_000_000));
   loginCodes.put(user.getUsername().toLowerCase(Locale.ROOT),new LoginCode(code,Instant.now().plusSeconds(600)));
-  return ResponseEntity.ok(Map.of("message","Código enviado.","code",code));
+  return ResponseEntity.ok(Map.of("registered",true,"message","Código enviado.","code",code));
  }
 
  @PostMapping("/auth/login")

@@ -11,12 +11,12 @@ async function parseResponse(response) {
   return data;
 }
 
-export async function requestLoginCode(identifier) {
+export async function requestLoginCode(identifier, profile = {}) {
   try {
     const response = await fetch(`${API_URL}/api/auth/request-code`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ identifier: identifier.trim() }),
+      body: JSON.stringify({ identifier: identifier.trim(), ...profile }),
     });
     return await parseResponse(response);
   } catch (error) {
