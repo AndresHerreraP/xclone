@@ -1,28 +1,26 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
-import { Layout } from './components/Layout'
-import { ProtectedRoute } from './components/ProtectedRoute'
-import { FeedPage } from './pages/FeedPage'
-import { FollowListPage } from './pages/FollowListPage'
-import { LoginPage } from './pages/LoginPage'
-import { ProfilePage } from './pages/ProfilePage'
+﻿
+import { Navigate, Route, Routes } from "react-router-dom";
+import { Feed } from "./pages/Feed";
+import { Login } from "./pages/Login";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { Profile } from "./pages/Profile";
+import { FollowList } from "./pages/FollowList";
+import { Search } from "./pages/Search";
+import { Notifications } from "./pages/Notifications";
 
-export default function App() {
+export function App() {
   return (
     <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route
-        element={
-          <ProtectedRoute>
-            <Layout />
-          </ProtectedRoute>
-        }
-      >
-        <Route path="/" element={<FeedPage />} />
-        <Route path="/users/:username" element={<ProfilePage />} />
-        <Route path="/users/:username/followers" element={<FollowListPage type="followers" />} />
-        <Route path="/users/:username/following" element={<FollowListPage type="following" />} />
+      <Route path="/login" element={<Login />} />
+      <Route element={<ProtectedRoute />}>
+        <Route path="/feed" element={<Feed />} />
+        <Route path="/search" element={<Search />} />
+        <Route path="/notifications" element={<Notifications />} />
+        <Route path="/users/:username" element={<Profile />} />
+        <Route path="/users/:username/followers" element={<FollowList type="followers" />} />
+        <Route path="/users/:username/following" element={<FollowList type="following" />} />
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
-  )
+  );
 }

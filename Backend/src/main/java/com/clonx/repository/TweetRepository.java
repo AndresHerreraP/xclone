@@ -1,0 +1,3 @@
+package com.clonx.repository;
+import com.clonx.model.Tweet; import org.springframework.data.domain.*; import org.springframework.data.jpa.repository.JpaRepository; import java.util.Collection;
+public interface TweetRepository extends JpaRepository<Tweet,Long>{ Page<Tweet> findByAuthorUsernameIgnoreCase(String username,Pageable pageable); Page<Tweet> findByAuthorIdIn(Collection<Long> ids,Pageable pageable); boolean existsByContent(String content); }
