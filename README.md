@@ -2,6 +2,15 @@
 
 ClonX es una aplicación web inspirada en X. Tiene un frontend en React y una API en Spring Boot que guarda la información en SQL Server.
 
+## ¿De qué trata el proyecto?
+
+ClonX es un clon académico de una red social tipo X. Permite iniciar sesión
+con cuentas existentes, consultar un feed de publicaciones, publicar mensajes,
+buscar usuarios, ver perfiles, seguir o dejar de seguir cuentas y revisar las
+listas de seguidores y seguidos. El frontend consume la API del backend y el
+backend consulta y guarda los datos en SQL Server; no se usan listas simuladas
+como fuente principal de la aplicación.
+
 ## Estructura
 
 ```text
