@@ -46,7 +46,7 @@ export function FollowList({ type }) {
         <main className="follow-page">
           <header className="follow-page-header">
             <Link to={`/users/${username}`} className="back-link" aria-label="Volver al perfil">Volve</Link>
-            <div><h1>Seguidores y seguidos</h1><p>Lista paginada · 10 cuentas por pagina A· orden alfabetico</p></div>
+            <div><h1>{title}</h1><p>{type === "followers" ? "Personas que siguen a" : "Personas que sigue"} @{username} · 10 cuentas por página</p></div>
           </header>
           <div className="follow-tabs">
             <Link className={type === "followers" ? "active" : ""} to={`/users/${username}/followers`}>Seguidores</Link>

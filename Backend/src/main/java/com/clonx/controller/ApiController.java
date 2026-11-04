@@ -139,15 +139,15 @@ public class ApiController {
  }
 
  @GetMapping("/users/{username}/followers")
- Map<String,Object> followers(@PathVariable String username,@RequestParam(defaultValue="1") int page,@RequestParam(defaultValue="10") int size){
+ Map<String,Object> followers(Authentication a,@PathVariable String username,@RequestParam(defaultValue="1") int page,@RequestParam(defaultValue="10") int size){
   Page<Follow> result=follows.findByFollowedUsernameIgnoreCase(username,pageable(page,size,Sort.by(Sort.Direction.ASC,"follower.fullName")));
-  return followPage(result,page,size,true);
+  return followPage(result,page,size,true,a.getName());
  }
 
  @GetMapping("/users/{username}/following")
- Map<String,Object> following(@PathVariable String username,@RequestParam(defaultValue="1") int page,@RequestParam(defaultValue="10") int size){
+ Map<String,Object> following(Authentication a,@PathVariable String username,@RequestParam(defaultValue="1") int page,@RequestParam(defaultValue="10") int size){
   Page<Follow> result=follows.findByFollowerUsernameIgnoreCase(username,pageable(page,size,Sort.by(Sort.Direction.ASC,"followed.fullName")));
-  return followPage(result,page,size,false);
+  return followPage(result,page,size,false,a.getName());
  }
 
  @PostMapping("/follows")
@@ -181,5 +181,5 @@ public class ApiController {
  }
  private Map<String,Object> tweetDto(Tweet t){return Map.of("id",t.getId(),"content",t.getContent(),"author",userDto(t.getAuthor(),null),"createdAt",t.getCreatedAt());}
  private Map<String,Object> pageDto(Page<Tweet> p,int page,int size){return Map.of("items",p.getContent().stream().map(this::tweetDto).toList(),"page",page,"size",size,"totalItems",p.getTotalElements(),"totalPages",p.getTotalPages());}
- private Map<String,Object> followPage(Page<Follow> p,int page,int size,boolean followers){return Map.of("items",p.getContent().stream().map(f->userDto(followers?f.getFollower():f.getFollowed(),null)).toList(),"page",page,"size",size,"totalItems",p.getTotalElements(),"totalPages",p.getTotalPages());}
+ private Map<String,Object> followPage(Page<Follow> p,int page,int size,boolean followers,String viewer){return Map.of("items",p.getContent().stream().map(f->userDto(followers?f.getFollower():f.getFollowed(),viewer)).toList(),"page",page,"size",size,"totalItems",p.getTotalElements(),"totalPages",p.getTotalPages());}
 }
