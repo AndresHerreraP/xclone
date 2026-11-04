@@ -413,3 +413,39 @@ Respuesta correcta:
 ```
 
 > El código se devuelve en JSON solo para desarrollo local. En producción debe enviarse por correo o SMS y no exponerse en la respuesta.
+
+## 8. Actualización visual del login
+
+Esta es la implementación actual del flujo:
+
+1. `identifier` guarda el correo o nombre de usuario.
+2. `code` guarda el código que la persona escribirá.
+3. `generatedCode` guarda el código que el backend devuelve durante el desarrollo local.
+4. `codeRequested` indica cuándo debe cambiar el formulario al modo código.
+5. El formulario usa **un solo elemento `<input>`**:
+   - Antes de pedir el código: muestra “Correo electrónico o nombre de usuario”.
+   - Después de pedirlo: muestra “Código de acceso”.
+6. El mismo input cambia dinámicamente:
+   - `id`: cambia de `identifier` a `code`.
+   - `name`: cambia de `identifier` a `code`.
+   - `value`: cambia de `identifier` a `code`.
+   - `onChange`: cambia al manejador correspondiente.
+   - `placeholder` y `label`: cambian al texto del código.
+7. Cuando llega la respuesta del backend, `Login.jsx`:
+   - limpia el contenido del input con `setCode("")`;
+   - guarda el código recibido con `setGeneratedCode(value)`;
+   - activa el modo código con `setCodeRequested(true)`.
+8. `EmailLoginForm.jsx` muestra debajo del mismo input:
+
+   ```text
+   Tu código es: 123456
+   ```
+
+9. El botón “Iniciar sesión” envía el valor que la persona escribe en ese mismo input.
+10. Si la cuenta no existe, se muestran los campos de nombre completo, username y correo. Después de crearla, el input principal vuelve a cambiar al modo código.
+
+### Diferencia entre el código generado y el código escrito
+
+- `generatedCode`: valor que el backend devuelve y se muestra debajo para pruebas locales.
+- `code`: valor que la persona escribe en la caja.
+- El login envía `code`, no `generatedCode`, porque así se comprueba que la persona realmente introduzca el código.
