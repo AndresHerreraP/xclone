@@ -33,7 +33,6 @@ export function TweetComposer({ onPublished }) {
         value={content}
         maxLength={MAX_TWEET_LENGTH}
         placeholder="¿Que está pasando?"
-        aria-label="Contenido del tweet"
         onChange={(event) => setContent(event.target.value)}
       />
       <div className="tweet-composer-footer">

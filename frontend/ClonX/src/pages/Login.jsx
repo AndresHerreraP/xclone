@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Divider } from "../components/Divider";
 import { EmailLoginForm } from "../components/EmailLoginForm";
+import { LoginSocial } from "../components/LoginSocial";
 import { login } from "../services/authService";
 
 export function Login() {
@@ -36,24 +37,35 @@ export function Login() {
           <div className="col-12 col-md-6 login-left">
             <div className="login-form">
               <h1>Lo que está<br />pasando<br />ahora.</h1>
-              <div className="d-flex flex-column gap-3">
-                <div className="small text-secondary">Escribe tu correo electrónico o nombre de usuario y recibe un código de acceso.</div>
+              <div className="login-content d-flex flex-column gap-3">
+                <div className="login-subtitle">Únete a la conversación. Inicia sesión para ver lo que está pasando.</div>
+                <div className="login-socials">
+                  <LoginSocial provider="Continuar con Google" icon="bi-google" onClick={() => setError("El inicio con Google estará disponible próximamente.")} />
+                  <LoginSocial provider="Continuar con Apple" icon="bi-apple" onClick={() => setError("El inicio con Apple estará disponible próximamente.")} />
+                </div>
+                <Divider />
                 <EmailLoginForm identifier={identifier} code={code} generatedCode={generatedCode} codeRequested={codeRequested}
                   error={error} loading={loading}
                   needsRegistration={needsRegistration} profile={profile}
                   onIdentifierChange={(event) => setIdentifier(event.target.value)}
                   onCodeChange={(event) => setCode(event.target.value)}
                   onProfileChange={(event) => setProfile({ ...profile, [event.target.name]: event.target.value })}
-                  onCodeRequested={(value) => {
+                  onCodeRequested={(value, accountIdentifier = identifier) => {
+                    setIdentifier(accountIdentifier);
                     setCode(value);
                     setGeneratedCode(value);
                     setCodeRequested(true);
                   }}
-                  onRegistrationRequired={() => setNeedsRegistration(true)}
+                  onRegistrationRequired={() => {
+                    setNeedsRegistration(true);
+                    setError("Completa tu nombre y elige un nombre de usuario para crear la cuenta.");
+                    if (identifier.includes("@")) {
+                      setProfile((current) => ({ ...current, email: identifier.trim() }));
+                    }
+                  }}
                   onError={setError}
                   onSubmit={handleSubmit} />
-                <Divider />
-                <p className="enlace">Si no tienes cuenta, la crearemos con tus datos.</p>
+                <p className="login-hint">Si no tienes cuenta, la crearemos con tus datos.</p>
               </div>
             </div>
           </div>

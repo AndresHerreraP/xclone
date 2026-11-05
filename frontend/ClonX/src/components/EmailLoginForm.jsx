@@ -6,7 +6,7 @@ export function EmailLoginForm({ identifier, code, generatedCode, codeRequested,
     try {
       const response = await requestLoginCode(identifier, needsRegistration ? profile : {});
       if (response.registered) {
-        onCodeRequested(response.code);
+        onCodeRequested(response.code, response.username || response.email || identifier.trim());
       } else {
         onRegistrationRequired();
       }
@@ -59,8 +59,15 @@ export function EmailLoginForm({ identifier, code, generatedCode, codeRequested,
           </>
         ) : (
           <>
-          <div className="small text-secondary">Escribe el código que recibiste.</div>
-          {generatedCode && <div className="login-code-preview">Tu código es: <strong>{generatedCode}</strong></div>}
+          <div className="login-step-label">Paso 2 de 2</div>
+          <div className="small text-secondary">Escribe el código de acceso que recibiste.</div>
+          {generatedCode && (
+            <div className="login-code-preview">
+              <span>Tu código de acceso</span>
+              <strong>{generatedCode}</strong>
+              <small>Este código es válido durante 10 minutos</small>
+            </div>
+          )}
           <Button color="btn-light" text={loading ? "Entrando..." : "Iniciar sesión"} type="submit"
             disabled={loading || !code.trim()} />
           </>

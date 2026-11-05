@@ -11,6 +11,7 @@ export function FollowList({ type }) {
   const [data, setData] = useState({ items: [], page: 1, totalPages: 0 });
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState("Cargando lista...");
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     async function run() {
@@ -28,6 +29,12 @@ export function FollowList({ type }) {
 
   const title = type === "followers" ? "Seguidores" : "Seguidos";
   const me = getStoredUser();
+  const normalizedSearch = search.trim().toLowerCase();
+  const filteredUsers = data.items.filter((user) =>
+    !normalizedSearch
+    || (user.fullName || "").toLowerCase().includes(normalizedSearch)
+    || (user.username || "").toLowerCase().includes(normalizedSearch)
+  );
 
   return (
     <div className="feed-page">
@@ -39,7 +46,8 @@ export function FollowList({ type }) {
             <Link className="feed-nav-item" to="/search"><i className="bi bi-search" /><span>Explorar</span></Link>
             <Link className="feed-nav-item" to="/notifications"><i className="bi bi-bell" /><span>Notificaciones</span></Link>
             <Link className="feed-nav-item active" to={`/users/${me?.username}`}><i className="bi bi-person" /><span>Perfil</span></Link>
-            <Link className="feed-nav-item" to="/feed"><i className="bi bi-three-dots" /><span>Mas</span></Link>
+            <Link className="feed-nav-item" to={`/users/${me?.username}/followers`}><i className="bi bi-people" /><span>Seguidores</span></Link>
+            <Link className="feed-nav-item" to={`/users/${me?.username}/following`}><i className="bi bi-person-check" /><span>Seguidos</span></Link>
             <Link className="feed-post-button" to="/feed">Publicar</Link>
           </nav>
         </aside>
@@ -54,14 +62,22 @@ export function FollowList({ type }) {
           </div>
           <div className="follow-list-toolbar">
             <span>{title} de @{username} · {data.totalItems || 0} cuentas</span>
-            <input type="search" placeholder="@usuario para seguir" aria-label="Buscar usuario" />
+            <input
+              type="search"
+              placeholder="Buscar por nombre o @usuario"
+              aria-label={`Filtrar ${title.toLowerCase()}`}
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
           </div>
           {status ? <p role="status">{status}</p> : (
             <>
               <UserList
                 key={`${type}-${page}-${data.items.map((user) => user.id).join("-")}`}
-                users={data.items}
-                emptyMessage={type === "followers" ? "Este usuario todavía no tiene seguidores." : "Este usuario todavía no sigue a nadie."}
+                users={filteredUsers}
+                emptyMessage={normalizedSearch
+                  ? "No hay coincidencias para esa búsqueda."
+                  : type === "followers" ? "Este usuario todavía no tiene seguidores." : "Este usuario todavía no sigue a nadie."}
                 showFollowButton={
                   type === "followers"
                   || (type === "following" && username.toLowerCase() === me?.username?.toLowerCase())

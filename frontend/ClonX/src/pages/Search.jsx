@@ -53,7 +53,8 @@ export function Search() {
             <Link className="feed-nav-item active" to="/search"><i className="bi bi-search" /><span>Explorar</span></Link>
             <Link className="feed-nav-item" to="/notifications"><i className="bi bi-bell" /><span>Notificaciones</span></Link>
             <Link className="feed-nav-item" to={`/users/${me?.username}`}><i className="bi bi-person" /><span>Perfil</span></Link>
-            <Link className="feed-nav-item" to="/feed"><i className="bi bi-three-dots" /><span>Más opciones</span></Link>
+            <Link className="feed-nav-item" to={`/users/${me?.username}/followers`}><i className="bi bi-people" /><span>Seguidores</span></Link>
+            <Link className="feed-nav-item" to={`/users/${me?.username}/following`}><i className="bi bi-person-check" /><span>Seguidos</span></Link>
             <Link className="feed-post-button" to="/feed">Postear</Link>
           </nav>
           <div className="feed-account">
@@ -91,8 +92,17 @@ export function Search() {
             {status && <p role="status">{status}</p>}
             {!status && suggestions.map((suggestion) => (
               <div className="search-suggestion" key={suggestion.username}>
-                <span className="avatar">{(suggestion.fullName || suggestion.username).slice(0, 1).toUpperCase()}</span>
-                <div><strong>{suggestion.fullName}</strong><span>@{suggestion.username}</span></div>
+                <Link
+                  to={`/users/${suggestion.username}`}
+                  className="search-suggestion-profile"
+                  aria-label={`Ver el perfil de ${suggestion.fullName || suggestion.username}`}
+                >
+                  <span className="avatar">{(suggestion.fullName || suggestion.username).slice(0, 1).toUpperCase()}</span>
+                  <span className="search-suggestion-copy">
+                    <strong>{suggestion.fullName}</strong>
+                    <span>@{suggestion.username}</span>
+                  </span>
+                </Link>
                 <button type="button" className={following[suggestion.username] ? "is-following" : ""} onClick={() => handleFollow(suggestion.username)}>
                   {following[suggestion.username] ? "Dejar de seguir" : "Seguir"}
                 </button>

@@ -20,3 +20,11 @@ export async function getUserTweets(username, page) {
   );
   return { ...data, page: toUiPage(data.page) };
 }
+
+export function likeTweet(tweetId) {
+  return apiRequest(`/api/tweets/${tweetId}/like`, { method: "POST" });
+}
+
+export function repostTweet(tweetId) {
+  return apiRequest(`/api/tweets/${tweetId}/repost`, { method: "POST" });
+}

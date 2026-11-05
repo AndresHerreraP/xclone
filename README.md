@@ -27,7 +27,7 @@ xclone/
 
 ### Backend
 
-- Java 25
+- Java 25 LTS
 - Spring Boot 3.4.5
 - Spring Data JPA
 - Spring Security
@@ -72,7 +72,7 @@ jdbc:sqlserver://localhost:1433;databaseName=xclone;encrypt=true;trustServerCert
 
 ## Ejecutar el backend
 
-Requisitos: JDK 25, Maven y SQL Server activo.
+Requisitos: JDK 25 LTS, Maven y SQL Server activo.
 
 ```powershell
 cd C:\Users\AndresH\Documents\xclone\backend

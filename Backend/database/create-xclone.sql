@@ -46,3 +46,31 @@ BEGIN
     );
 END;
 GO
+
+IF OBJECT_ID(N'dbo.likes', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.likes (
+        id BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        user_id BIGINT NOT NULL,
+        tweet_id BIGINT NOT NULL,
+        created_at DATETIMEOFFSET NOT NULL DEFAULT SYSDATETIMEOFFSET(),
+        CONSTRAINT UQ_likes_pair UNIQUE (user_id, tweet_id),
+        CONSTRAINT FK_likes_user FOREIGN KEY (user_id) REFERENCES dbo.users(id),
+        CONSTRAINT FK_likes_tweet FOREIGN KEY (tweet_id) REFERENCES dbo.tweets(id)
+    );
+END;
+GO
+
+IF OBJECT_ID(N'dbo.reposts', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.reposts (
+        id BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        user_id BIGINT NOT NULL,
+        tweet_id BIGINT NOT NULL,
+        created_at DATETIMEOFFSET NOT NULL DEFAULT SYSDATETIMEOFFSET(),
+        CONSTRAINT UQ_reposts_pair UNIQUE (user_id, tweet_id),
+        CONSTRAINT FK_reposts_user FOREIGN KEY (user_id) REFERENCES dbo.users(id),
+        CONSTRAINT FK_reposts_tweet FOREIGN KEY (tweet_id) REFERENCES dbo.tweets(id)
+    );
+END;
+GO

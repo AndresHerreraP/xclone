@@ -62,7 +62,8 @@ export function Profile() {
             <Link className="feed-nav-item" to="/search"><i className="bi bi-search" /><span>Explorar</span></Link>
             <Link className="feed-nav-item" to="/notifications"><i className="bi bi-bell" /><span>Notificaciones</span></Link>
             <Link className="feed-nav-item active" to={`/users/${username}`}><i className="bi bi-person" /><span>Perfil</span></Link>
-            <Link className="feed-nav-item" to="/feed"><i className="bi bi-three-dots" /><span>Mas opciones</span></Link>
+            <Link className="feed-nav-item" to={`/users/${me?.username}/followers`}><i className="bi bi-people" /><span>Seguidores</span></Link>
+            <Link className="feed-nav-item" to={`/users/${me?.username}/following`}><i className="bi bi-person-check" /><span>Seguidos</span></Link>
             <Link className="feed-post-button" to="/feed">Postear</Link>
           </nav>
           <button type="button" className="profile-logout" onClick={() => { clearSession(); window.location.href = "/login"; }}>Cerrar sesión</button>

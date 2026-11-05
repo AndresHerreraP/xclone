@@ -1,5 +1,6 @@
 body{
     background-color: #000;
+    overflow-x: hidden;
 }
 
 h1 {
@@ -56,19 +57,55 @@ h1 {
   text-align: center;
 }
 
-.login-code-preview {
-  color: #1d9bf0;
+.login-content {
+  max-width: 520px;
+}
+
+.login-subtitle {
+  color: #aab4be;
   font-size: 15px;
-  margin-top: -6px;
+  line-height: 1.5;
+  margin-left: 70px;
+  max-width: 360px;
+  text-align: center;
+}
+
+.login-step-label {
+  color: #1d9bf0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-left: 70px;
+  text-align: center;
+  text-transform: uppercase;
+  width: 60%;
+}
+
+.login-code-preview {
+  align-items: center;
+  background: linear-gradient(135deg, #10243a, #101820);
+  border: 1px solid #1d9bf0;
+  border-radius: 14px;
+  color: #aab4be;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-left: 70px;
+  padding: 14px 20px;
   text-align: center;
   width: 60%;
-  position: relative;
-  left: 70px;
 }
 
 .login-code-preview strong {
   color: #fff;
+  font-size: 28px;
   letter-spacing: 0.18em;
+  line-height: 1.1;
+}
+
+.login-code-preview small {
+  color: #7d8b98;
+  font-size: 11px;
 }
 
 .input-x:focus {
@@ -102,7 +139,7 @@ h1 {
   border-radius: 9999px;
   background: #fff;
   color: #0f1419;
-  font-size: 22x;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   position: relative;
@@ -117,6 +154,21 @@ h1 {
 
 .login-social:hover {
   background: #f7f9f9;
+  transform: translateY(-1px);
+}
+
+.login-socials {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.login-hint {
+  color: #71767b;
+  font-size: 12px;
+  margin: 0 0 0 70px;
+  text-align: center;
+  width: 60%;
 }
 
 .enlace-x {
@@ -537,7 +589,7 @@ h1 {
   width: 36px;
 }
 
-.feed-main { border-right: 1px solid #2f3336; min-width: 0; }
+.feed-main { border-right: 1px solid #2f3336; min-width: 0; overflow: hidden; }
 .feed-header { background: rgba(0,0,0,.92); padding: 16px 0 0; position: sticky; top: 0; z-index: 2; }
 .feed-header h1 { font-size: 20px; letter-spacing: 0; margin: 0; padding: 0 16px 14px; }
 .feed-tabs { display: flex; }
@@ -549,13 +601,29 @@ h1 {
 .tweet-composer .btn { left: auto; width: auto; min-height: 34px; padding: 7px 18px; }
 .tweet-item { padding: 16px; }
 .tweet-item:hover { background: #080808; }
-.tweet-item header { font-size: 14px; }
-.tweet-item p { color: #e7e9ea; font-size: 15px; line-height: 1.35; margin: 8px 0 0; }
+.tweet-item header {
+  font-size: 14px;
+  line-height: 1.35;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.tweet-item p {
+  color: #e7e9ea;
+  font-size: 15px;
+  line-height: 1.35;
+  margin: 8px 0 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
 .tweet-actions { display: flex; justify-content: space-between; margin-top: 14px; max-width: 430px; }
 .tweet-actions button { align-items: center; background: transparent; border: 0; color: #71767b; display: flex; font-size: 12px; gap: 6px; padding: 3px 0; }
 .tweet-actions button:hover { color: #1d9bf0; }
 .tweet-actions button.liked { color: #f91880; }
 .tweet-actions button.liked:hover { color: #e61775; }
+.tweet-actions button.reposted { color: #00ba7c; }
+.tweet-actions button.reposted:hover { color: #03a170; }
 .tweet-actions i { font-size: 16px; }
 .pagination-controls { padding: 16px; }
 
@@ -616,7 +684,8 @@ h1 {
   .feed-x-mark, .feed-account { display: none; }
   .feed-navigation { flex-direction: row; justify-content: space-around; width: 100%; }
   .feed-nav-item { padding: 14px 20px; }
-  .feed-nav-item:nth-child(n+3) { display: none; }
+  .feed-navigation { overflow-x: auto; }
+  .feed-nav-item { flex: 0 0 auto; }
   .feed-main { border: 0; padding-bottom: 58px; }
   .feed-header { padding-top: 8px; }
 }
@@ -677,7 +746,9 @@ h1 {
 .search-card h2 { font-size: 18px; margin: 0 0 14px; }
 .search-card-heading a { color: #1d9bf0; font-size: 12px; text-decoration: none; }
 .search-suggestion { align-items: center; display: flex; gap: 8px; margin: 13px 0; }
-.search-suggestion > div { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.search-suggestion-profile { align-items: center; color: inherit; display: flex; flex: 1; gap: 8px; min-width: 0; text-decoration: none; }
+.search-suggestion-profile:hover strong { text-decoration: underline; }
+.search-suggestion-copy { display: flex; flex: 1; flex-direction: column; min-width: 0; }
 .search-suggestion strong, .search-suggestion span:not(.avatar) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .search-suggestion span:not(.avatar) { color: #71767b; font-size: 11px; }
 .search-suggestion button { background: #e7e9ea; border: 0; border-radius: 999px; color: #0f1419; font-size: 11px; font-weight: 700; padding: 6px 12px; }

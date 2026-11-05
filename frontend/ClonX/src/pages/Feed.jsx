@@ -45,7 +45,8 @@ export function Feed() {
             <Link className="feed-nav-item" to="/search"><i className="bi bi-search" /><span>Explorar</span></Link>
             <Link className="feed-nav-item" to="/notifications"><i className="bi bi-bell" /><span>Notificaciones</span></Link>
             <a className="feed-nav-item" href={`/users/${me?.username}`}><i className="bi bi-person" /><span>Perfil</span></a>
-            <a className="feed-nav-item" href="/feed"><i className="bi bi-three-dots" /><span>Más opciones</span></a>
+            <Link className="feed-nav-item" to={`/users/${me?.username}/followers`}><i className="bi bi-people" /><span>Seguidores</span></Link>
+            <Link className="feed-nav-item" to={`/users/${me?.username}/following`}><i className="bi bi-person-check" /><span>Seguidos</span></Link>
             <button type="button" className="feed-post-button" onClick={focusComposer}>Postear</button>
           </nav>
           <div className="feed-account">

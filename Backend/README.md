@@ -1,6 +1,6 @@
 # Backend de ClonX
 
-API de ClonX hecha con Java 25, Spring Boot, SQL Server y JWT.
+API de ClonX hecha con Java 25 LTS, Spring Boot, SQL Server y JWT.
 
 ## Antes de ejecutar
 
@@ -72,6 +72,8 @@ POST /api/auth/login
 | `GET` | `/api/users/{username}/following` | Consultar sus seguidos |
 | `GET` | `/api/feed` | Cargar el feed |
 | `POST` | `/api/tweets` | Publicar un tweet |
+| `POST` | `/api/tweets/{id}/like` | Dar o quitar me gusta |
+| `POST` | `/api/tweets/{id}/repost` | Republicar o quitar la republicación |
 | `POST` | `/api/follows` | Seguir a un usuario |
 | `DELETE` | `/api/follows/{username}` | Dejar de seguirlo |
 
@@ -82,9 +84,11 @@ Authorization: Bearer <token>
 ```
 
 Las tendencias se calculan contando palabras de los tweets guardados en SQL
-Server. Las notificaciones actuales representan seguimientos guardados en la
-tabla `follows`; no se muestran likes o respuestas inventados porque esas
-relaciones no existen en el esquema actual.
+Server. Los me gusta y las republicaciones se guardan en las tablas `likes` y
+`reposts`, cada par usuario-tweet es único y las respuestas todavía no existen
+en el esquema, así que el botón de responder sigue sin acción. Las
+notificaciones actuales representan seguimientos guardados en la tabla
+`follows`.
 
 ## Frontend
 

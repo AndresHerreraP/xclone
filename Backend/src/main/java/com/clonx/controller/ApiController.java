@@ -8,6 +8,7 @@ import jakarta.validation.constraints.*;
 import org.springframework.data.domain.*;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import java.security.SecureRandom;
@@ -21,12 +22,14 @@ public class ApiController {
  private final UserRepository users;
  private final TweetRepository tweets;
  private final FollowRepository follows;
+ private final LikeRepository likes;
+ private final RepostRepository reposts;
  private final JwtService jwtService;
  private final Map<String, LoginCode> loginCodes = new ConcurrentHashMap<>();
  private final SecureRandom random = new SecureRandom();
 
- public ApiController(UserRepository u,TweetRepository t,FollowRepository f,JwtService j){
-  users=u;tweets=t;follows=f;jwtService=j;
+ public ApiController(UserRepository u,TweetRepository t,FollowRepository f,LikeRepository l,RepostRepository r,JwtService j){
+  users=u;tweets=t;follows=f;likes=l;reposts=r;jwtService=j;
  }
 
  record Login(@NotBlank String identifier,@NotBlank String code){}
@@ -51,7 +54,7 @@ public class ApiController {
   }
   String code=String.format("%06d",random.nextInt(1_000_000));
   loginCodes.put(user.getUsername().toLowerCase(Locale.ROOT),new LoginCode(code,Instant.now().plusSeconds(600)));
-  return ResponseEntity.ok(Map.of("registered",true,"message","Código enviado.","code",code));
+  return ResponseEntity.ok(Map.of("registered",true,"message","Código enviado.","code",code,"username",user.getUsername(),"email",user.getEmail()));
  }
 
  @PostMapping("/auth/login")
@@ -79,7 +82,29 @@ public class ApiController {
  ResponseEntity<Map<String,Object>> tweet(Authentication a,@Valid @RequestBody TweetInput input){
   String content=input.content().trim();
   if(content.isEmpty()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"El tweet no puede estar vacío.");
-  return ResponseEntity.status(HttpStatus.CREATED).body(tweetDto(tweets.save(new Tweet(content,current(a.getName())))));
+  return ResponseEntity.status(HttpStatus.CREATED).body(tweetDto(tweets.save(new Tweet(content,current(a.getName()))),a.getName()));
+ }
+
+ @PostMapping("/tweets/{id}/like")
+ @Transactional
+ Map<String,Object> like(Authentication a,@PathVariable Long id){
+  AppUser me=current(a.getName());
+  Tweet tweet=tweets.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"El tweet no existe."));
+  boolean liked=false;
+  if(likes.existsByUserIdAndTweetId(me.getId(),tweet.getId())) likes.deleteByUserIdAndTweetId(me.getId(),tweet.getId());
+  else{likes.save(new Like(me,tweet));liked=true;}
+  return Map.of("liked",liked,"likes",likes.countByTweetId(tweet.getId()));
+ }
+
+ @PostMapping("/tweets/{id}/repost")
+ @Transactional
+ Map<String,Object> repost(Authentication a,@PathVariable Long id){
+  AppUser me=current(a.getName());
+  Tweet tweet=tweets.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"El tweet no existe."));
+  boolean reposted=false;
+  if(reposts.existsByUserIdAndTweetId(me.getId(),tweet.getId())) reposts.deleteByUserIdAndTweetId(me.getId(),tweet.getId());
+  else{reposts.save(new Repost(me,tweet));reposted=true;}
+  return Map.of("reposted",reposted,"reposts",reposts.countByTweetId(tweet.getId()));
  }
 
  @GetMapping("/feed")
@@ -89,7 +114,7 @@ public class ApiController {
   List<Long> ids=follows.findAll().stream().filter(f->f.getFollower().getId().equals(me.getId())).map(f->f.getFollowed().getId()).toList();
   List<Long> allowed=new ArrayList<>(ids); allowed.add(me.getId());
   Page<Tweet> result=tweets.findByAuthorIdIn(allowed,request);
-  return pageDto(result,page,size);
+  return pageDto(result,page,size,a.getName());
  }
 
  @GetMapping("/users")
@@ -133,9 +158,9 @@ public class ApiController {
  }
 
  @GetMapping("/users/{username}/tweets")
- Map<String,Object> userTweets(@PathVariable String username,@RequestParam(defaultValue="1") int page,@RequestParam(defaultValue="10") int size){
+ Map<String,Object> userTweets(Authentication a,@PathVariable String username,@RequestParam(defaultValue="1") int page,@RequestParam(defaultValue="10") int size){
   Page<Tweet> result=tweets.findByAuthorUsernameIgnoreCase(username,pageable(page,size,Sort.by(Sort.Direction.DESC,"createdAt")));
-  return pageDto(result,page,size);
+  return pageDto(result,page,size,a.getName());
  }
 
  @GetMapping("/users/{username}/followers")
@@ -162,13 +187,13 @@ public class ApiController {
  }
 
  @DeleteMapping("/follows/{username}")
+ @Transactional
  Map<String,String> unfollow(Authentication a,@PathVariable String username){
   AppUser me=current(a.getName());
   AppUser target=users.findByUsernameIgnoreCase(username).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Usuario no existe."));
   if(!follows.existsByFollowerIdAndFollowedId(me.getId(),target.getId())) throw new ResponseStatusException(HttpStatus.NOT_FOUND,"No sigues a ese usuario.");
-  int deleted=follows.deleteByFollowerIdAndFollowedId(me.getId(),target.getId());
-  if(deleted!=1) throw new ResponseStatusException(HttpStatus.CONFLICT,"No se pudo dejar de seguir a ese usuario.");
-  return Map.of("message","Dejaste de seguir a @"+username);
+  follows.deleteByFollowerIdAndFollowedId(me.getId(),target.getId());
+  return Map.of("message","Dejaste de seguir a @"+target.getUsername());
  }
 
  private AppUser current(String username){return users.findByUsernameIgnoreCase(username).orElseThrow(()->new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Sesión inválida."));}
@@ -180,7 +205,12 @@ public class ApiController {
   boolean isFollowing=viewer!=null&&users.findByUsernameIgnoreCase(viewer).map(v->follows.existsByFollowerIdAndFollowedId(v.getId(),u.getId())).orElse(false);
   return Map.of("id",u.getId(),"fullName",u.getFullName(),"username",u.getUsername(),"email",u.getEmail(),"followers",follows.countByFollowedId(u.getId()),"following",follows.countByFollowerId(u.getId()),"isFollowing",isFollowing);
  }
- private Map<String,Object> tweetDto(Tweet t){return Map.of("id",t.getId(),"content",t.getContent(),"author",userDto(t.getAuthor(),null),"createdAt",t.getCreatedAt());}
- private Map<String,Object> pageDto(Page<Tweet> p,int page,int size){return Map.of("items",p.getContent().stream().map(this::tweetDto).toList(),"page",page,"size",size,"totalItems",p.getTotalElements(),"totalPages",p.getTotalPages());}
+ private Map<String,Object> tweetDto(Tweet t,String viewer){
+  Long tid=t.getId(), uid=viewer==null?null:users.findByUsernameIgnoreCase(viewer).map(AppUser::getId).orElse(null);
+  boolean liked=uid!=null&&likes.existsByUserIdAndTweetId(uid,tid);
+  boolean reposted=uid!=null&&reposts.existsByUserIdAndTweetId(uid,tid);
+  return Map.of("id",tid,"content",t.getContent(),"author",userDto(t.getAuthor(),viewer),"createdAt",t.getCreatedAt(),"likes",likes.countByTweetId(tid),"likedByMe",liked,"reposts",reposts.countByTweetId(tid),"repostedByMe",reposted);
+ }
+ private Map<String,Object> pageDto(Page<Tweet> p,int page,int size,String viewer){return Map.of("items",p.getContent().stream().map(t->tweetDto(t,viewer)).toList(),"page",page,"size",size,"totalItems",p.getTotalElements(),"totalPages",p.getTotalPages());}
  private Map<String,Object> followPage(Page<Follow> p,int page,int size,boolean followers,String viewer){return Map.of("items",p.getContent().stream().map(f->userDto(followers?f.getFollower():f.getFollowed(),viewer)).toList(),"page",page,"size",size,"totalItems",p.getTotalElements(),"totalPages",p.getTotalPages());}
 }

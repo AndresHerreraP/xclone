@@ -25,6 +25,8 @@ export function Notifications() {
             <Link className="feed-nav-item" to="/search"><i className="bi bi-search" /><span>Explorar</span></Link>
             <Link className="feed-nav-item active" to="/notifications"><i className="bi bi-bell-fill" /><span>Notificaciones</span></Link>
             <Link className="feed-nav-item" to={`/users/${me?.username}`}><i className="bi bi-person" /><span>Perfil</span></Link>
+            <Link className="feed-nav-item" to={`/users/${me?.username}/followers`}><i className="bi bi-people" /><span>Seguidores</span></Link>
+            <Link className="feed-nav-item" to={`/users/${me?.username}/following`}><i className="bi bi-person-check" /><span>Seguidos</span></Link>
             <Link className="feed-post-button" to="/feed">Postear</Link>
           </nav>
         </aside>
