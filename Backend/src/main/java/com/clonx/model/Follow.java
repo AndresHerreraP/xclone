@@ -1,5 +1,6 @@
 package com.clonx.model;
-import jakarta.persistence.*; import java.time.OffsetDateTime;
+import jakarta.persistence.*; 
+import java.time.OffsetDateTime;
 @Entity @Table(name="follows",uniqueConstraints=@UniqueConstraint(columnNames={"follower_id","followed_id"}))
 public class Follow {
  @Id @GeneratedValue(strategy=GenerationType.IDENTITY) private Long id;
